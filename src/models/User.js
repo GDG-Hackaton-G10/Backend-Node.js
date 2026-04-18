@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'pharmacy_manager', 'admin'],
         default: 'user',
     },
+    refreshToken: {
+        type: String,
+        default: null,
+    },
 }, {
     timestamps: true
 });
