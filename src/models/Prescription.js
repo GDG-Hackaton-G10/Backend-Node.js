@@ -1,39 +1,52 @@
 import mongoose from "mongoose";
 
-const prescriptionSchema = new mongoose.Schema({
+const prescriptionSchema = new mongoose.Schema(
+  {
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
+
     imageUrl: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
-    ocrText: {
-        type: String
+
+    ocrRawText: {
+      type: String,
     },
-    medicines: [{
+
+    extractedMedicines: [
+      {
         name: {
-            type: String,
-            required: true
+          type: String,
+          required: true,
         },
         dosage: String,
         frequency: String,
-        confidence: Number,
-        matchedMedicine: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Medicine'
-        }
-    }],
-    status: {
-        type: String,
-        enum: ['uploaded', 'processed', 'edited'],
-        default: 'uploaded'
-    }
-}, {
-    timestamps: true
-});
+        confidence: {
+          type: String, 
+          default: "medium",
+        },
+        matchedInDatabase: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
 
-const Prescription = mongoose.model('Prescription', prescriptionSchema);
+    status: {
+      type: String,
+      enum: ["uploaded", "processed", "edited"],
+      default: "uploaded",
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const Prescription = mongoose.model("Prescription", prescriptionSchema);
+
 export default Prescription;
