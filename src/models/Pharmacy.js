@@ -8,6 +8,24 @@ const pharmacySchema = new mongoose.Schema({
         maxlength: 100,
         trim: true,
     },
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point',
+            required: true
+        },
+        coordinates: {
+            type: [Number],
+            required: true,
+            validate: {
+                validator: function(coords){
+                    return Array.isArray(coords) && coords.length === 2;
+                },
+                message: 'Coordinates must be [longitude, latitude]'
+            }
+        }
+    },
     address: {
         type: String,
         trim: true,
@@ -16,23 +34,9 @@ const pharmacySchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
-    location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point',
-            required: true,
-        },
-        coordinates: {
-            type: [Number],
-            required: true,
-            validate: {
-                validator: function(coords) {
-                    return Array.isArray(coords) && coords.length === 2;
-                },
-                message: 'Coordinates must be [longitude, latitude]'
-            }
-        }
+    isOpen: {
+        type: Boolean,
+        default: true,
     },
     medicines: [{
         medicine: {
