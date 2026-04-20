@@ -14,6 +14,11 @@ const medicineSchema = new mongoose.Schema({
         maxlength: 100,
         trim: true,
     },
+    dosage: {
+        type: String,
+        trim: true,
+        maxlength: 100,
+    },
     category: {
         type: String,
         minlength: 3,
@@ -33,6 +38,9 @@ medicineSchema.index({
     genericName: 'text',
     aliases: 'text'
 });
+
+medicineSchema.index({ name: 1 });
+medicineSchema.index({ genericName: 1 });
 
 const Medicine = mongoose.model('Medicine', medicineSchema);
 export default Medicine;

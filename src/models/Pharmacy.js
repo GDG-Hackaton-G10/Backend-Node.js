@@ -20,14 +20,19 @@ const pharmacySchema = new mongoose.Schema({
             required: true,
             validate: {
                 validator: function(coords){
-                    return coords.length === 2;
+                    return Array.isArray(coords) && coords.length === 2;
                 },
                 message: 'Coordinates must be [longitude, latitude]'
             }
-        },
+        }
     },
     address: {
         type: String,
+        trim: true,
+    },
+    openingHours: {
+        type: String,
+        trim: true,
     },
     isOpen: {
         type: Boolean,
@@ -62,6 +67,7 @@ const pharmacySchema = new mongoose.Schema({
 });
 
 pharmacySchema.index({ location: '2dsphere'});
+pharmacySchema.index({ 'medicines.medicine': 1 });
 
 const Pharmacy = mongoose.model('Pharmacy', pharmacySchema);
 export default Pharmacy;
