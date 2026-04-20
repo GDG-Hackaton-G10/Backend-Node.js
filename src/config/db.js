@@ -1,8 +1,14 @@
 import mongoose from "mongoose";
 
-const connectDB = async () => {
+export const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
+    const databaseUrl = process.env.DATABASE_URL || process.env.MONGO_URI;
+
+    if (!databaseUrl) {
+      throw new Error("Database connection string is not configured");
+    }
+
+    const conn = await mongoose.connect(databaseUrl);
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
@@ -11,4 +17,5 @@ const connectDB = async () => {
   }
 };
 
+export default connectDB;
 export default connectDB;

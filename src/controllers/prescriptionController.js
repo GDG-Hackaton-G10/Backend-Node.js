@@ -1,98 +1,133 @@
 import Prescription from "../models/Prescription.js";
 import cloudinary from "../utils/cloudinary.js";
+import AppError from "../utils/appError.js";
+import { sendSuccess } from "../utils/responseFormatter.js";
 
-export const uploadPrescription = async (req, res) => {
+const normalizeMedicines = (medicines = []) =>
+  medicines.map((medicine) => ({
+    name: medicine.name,
+    dosage: medicine.dosage,
+    frequency: medicine.frequency,
+    confidence: medicine.confidence ?? null,
+    matchedMedicine: medicine.matchedMedicine || null,
+    matchedInDatabase: Boolean(
+      medicine.matchedInDatabase ?? medicine.matchedMedicine
+    ),
+  }));
+
+export const uploadPrescription = async (req, res, next) => {
   try {
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({
-        success: false,
-        message: "No image uploaded",
-      });
+    if (!req.file) {
+      return next(new AppError("No image uploaded", 400, "VALIDATION_ERROR"));
     }
 
-    const result = await cloudinary.uploader.upload(file.path);
+    const result = await cloudinary.uploader.upload(req.file.path);
 
     const prescription = await Prescription.create({
-      userId: req.user?.id || "64b2c3d4e5f6a1b2c3d4e5f6",
+      userId: req.user.id,
       imageUrl: result.secure_url,
       status: "uploaded",
     });
 
-    res.status(201).json({
-      success: true,
-      prescriptionId: prescription._id,
-      imageUrl: result.secure_url,
-    });
+    return sendSuccess(
+      res,
+      {
+        prescriptionId: prescription._id,
+        imageUrl: result.secure_url,
+      },
+      "Prescription uploaded successfully",
+      201
+    );
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-export const getPrescriptionById = async (req, res) => {
+export const getPrescriptionById = async (req, res, next) => {
   try {
-    const prescription = await Prescription.findById(req.params.id);
+    const prescription =
+      req.prescription || (await Prescription.findById(req.params.id).lean());
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
-        message: "Not found",
-      });
+      return next(
+        new AppError("Prescription not found", 404, "PRESCRIPTION_NOT_FOUND")
+      );
     }
 
-    res.json({
-      success: true,
-      data: prescription,
-    });
+    return sendSuccess(res, prescription, 200);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const getUserPrescriptions = async (req, res) => {
+export const getUserPrescriptions = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { userId } = req.params;
+    const pageNumber = Math.max(Number(req.query.page) || 1, 1);
+    const limitNumber = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
+    const requestingUserId = req.user._id?.toString() || req.user.id;
+    const isPrivileged = ["admin", "pharmacy_manager"].includes(req.user.role);
 
-    const prescriptions = await Prescription.find({
-      userId: req.params.userId,
-    })
-      .limit(Number(limit))
-      .skip((page - 1) * limit);
+    if (!isPrivileged && requestingUserId !== userId) {
+      return next(
+        new AppError(
+          "You do not have permission to view these prescriptions",
+          403,
+          "FORBIDDEN"
+        )
+      );
+    }
 
-    res.json({
-      success: true,
-      data: prescriptions,
+    const [prescriptions, total] = await Promise.all([
+      Prescription.find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(limitNumber)
+        .skip((pageNumber - 1) * limitNumber)
+        .lean(),
+      Prescription.countDocuments({ userId }),
+    ]);
+
+    return sendSuccess(res, {
+      items: prescriptions,
+      page: pageNumber,
+      limit: limitNumber,
+      total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const updateMedicines = async (req, res) => {
+export const updateMedicines = async (req, res, next) => {
   try {
-    const prescription = await Prescription.findById(req.params.id);
+    if (!Array.isArray(req.body.medicines)) {
+      return next(
+        new AppError("Medicines must be provided as an array", 400, "VALIDATION_ERROR")
+      );
+    }
+
+    const prescription = req.prescription || (await Prescription.findById(req.params.id));
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
-        message: "Not found",
-      });
+      return next(
+        new AppError("Prescription not found", 404, "PRESCRIPTION_NOT_FOUND")
+      );
     }
 
-    prescription.extractedMedicines = req.body.medicines;
+    const medicines = normalizeMedicines(req.body.medicines);
+
+    prescription.medicines = medicines;
+    prescription.extractedMedicines = medicines;
     prescription.status = "edited";
 
     await prescription.save();
 
-    res.json({
-      success: true,
-      data: prescription,
-    });
+    return sendSuccess(
+      res,
+      prescription,
+      "Prescription medicines updated successfully"
+    );
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };

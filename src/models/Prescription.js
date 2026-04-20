@@ -1,5 +1,30 @@
 import mongoose from "mongoose";
 
+const prescriptionMedicineSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    dosage: String,
+    frequency: String,
+    confidence: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    matchedMedicine: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Medicine",
+      default: null,
+    },
+    matchedInDatabase: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: false }
+);
+
 const prescriptionSchema = new mongoose.Schema(
   {
     userId: {
@@ -13,28 +38,14 @@ const prescriptionSchema = new mongoose.Schema(
       required: true,
     },
 
+    ocrText: {
+      type: String,
+    },
     ocrRawText: {
       type: String,
     },
-
-    extractedMedicines: [
-      {
-        name: {
-          type: String,
-          required: true,
-        },
-        dosage: String,
-        frequency: String,
-        confidence: {
-          type: String, 
-          default: "medium",
-        },
-        matchedInDatabase: {
-          type: Boolean,
-          default: false,
-        },
-      },
-    ],
+    medicines: [prescriptionMedicineSchema],
+    extractedMedicines: [prescriptionMedicineSchema],
 
     status: {
       type: String,

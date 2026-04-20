@@ -1,29 +1,20 @@
-import express from "express";
-import connectDB from "./config/db.js";
 import dotenv from "dotenv";
-import cors from "cors";
-import morgan from "morgan";
-
-import prescriptionRoutes from "./routes/prescriptionRoutes.js";
+import app from "./app.js";
+import { connectDB } from "./config/db.js";
 
 dotenv.config();
 
-const app = express();
+const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json());
-app.use(morgan("dev"));
+const startServer = async () => {
+  await connectDB();
 
-app.use("/api/v1/prescriptions", prescriptionRoutes);
-
-app.get("/", (req, res) => {
-  res.send("API is running...");
-});
-
-const PORT = process.env.PORT || 3000;
-
-connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
+};
+
+startServer().catch((error) => {
+  console.error("Failed to start server:", error.message);
+  process.exit(1);
 });
