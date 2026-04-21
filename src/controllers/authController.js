@@ -3,10 +3,19 @@ import User from "../models/User.js";
 import {
   signToken,
   signRefreshToken,
-  verifyToken,
+  verifyRefreshToken,
 } from "../utils/jwtUtils.js";
 import { sendSuccess } from "../utils/responseFormatter.js";
 import AppError from "../utils/appError.js";
+
+const serializeUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
 
 export const register = async (req, res, next) => {
   try {
@@ -34,7 +43,7 @@ export const register = async (req, res, next) => {
 
     return sendSuccess(
       res,
-      { user, accessToken, refreshToken },
+      { user: serializeUser(user), accessToken, refreshToken },
       "User registered successfully",
       201
     );
@@ -65,7 +74,7 @@ export const login = async (req, res, next) => {
 
     return sendSuccess(
       res,
-      { user, accessToken, refreshToken },
+      { user: serializeUser(user), accessToken, refreshToken },
       "Login successful"
     );
   } catch (error) {
@@ -81,7 +90,7 @@ export const refreshToken = async (req, res, next) => {
       return next(new AppError("Refresh token required", 400));
     }
 
-    const decoded = verifyToken(token);
+    const decoded = verifyRefreshToken(token);
 
     if (decoded.type !== "refresh") {
       return next(new AppError("Invalid token type", 401));
