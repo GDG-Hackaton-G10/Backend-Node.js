@@ -85,4 +85,4 @@ This project is licensed under the MIT License.
 
 😊 Thank you for checking out **Smart Prescription Navigator**!  
 If you have suggestions, ideas, or want to contribute, feel free to join the discussion.  
-Stay healthy and happy coding! 💊
+Stay healthy ! 💊
