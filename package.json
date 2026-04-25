@@ -7,7 +7,10 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node tests/tests.example.js"
   },
   "repository": {
     "type": "git",
@@ -30,6 +33,7 @@
     "express-rate-limit": "^8.3.2",
     "groq-sdk": "^1.1.2",
     "helmet": "^8.1.0",
+    "joi": "^18.1.2",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.1",
     "mongoose": "^9.4.1",

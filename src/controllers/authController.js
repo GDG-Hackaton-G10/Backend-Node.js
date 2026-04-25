@@ -3,18 +3,28 @@ import User from "../models/User.js";
 import {
   signToken,
   signRefreshToken,
-  verifyToken,
+  verifyRefreshToken,
 } from "../utils/jwtUtils.js";
-import { sendSuccess, sendError } from "../utils/responseFormatter.js";
+import { sendSuccess } from "../utils/responseFormatter.js";
 import AppError from "../utils/appError.js";
 
-// REGISTER
+const serializeUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
+
 export const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) return next(new AppError("User already exists", 400));
+    if (existingUser) {
+      return next(new AppError("User already exists", 400));
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -33,25 +43,28 @@ export const register = async (req, res, next) => {
 
     return sendSuccess(
       res,
-      { user, accessToken, refreshToken },
+      { user: serializeUser(user), accessToken, refreshToken },
       "User registered successfully",
       201
     );
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 
-// LOGIN
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return next(new AppError("Invalid credentials", 401));
+    if (!user) {
+      return next(new AppError("Invalid credentials", 401));
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return next(new AppError("Invalid credentials", 401));
+    if (!isMatch) {
+      return next(new AppError("Invalid credentials", 401));
+    }
 
     const accessToken = signToken(user._id, user.role);
     const refreshToken = signRefreshToken(user._id);
@@ -61,24 +74,23 @@ export const login = async (req, res, next) => {
 
     return sendSuccess(
       res,
-      { user, accessToken, refreshToken },
+      { user: serializeUser(user), accessToken, refreshToken },
       "Login successful"
     );
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 
-// REFRESH TOKEN
 export const refreshToken = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken: token } = req.body;
 
-    if (!refreshToken) {
+    if (!token) {
       return next(new AppError("Refresh token required", 400));
     }
 
-    const decoded = verifyToken(refreshToken);
+    const decoded = verifyRefreshToken(token);
 
     if (decoded.type !== "refresh") {
       return next(new AppError("Invalid token type", 401));
@@ -86,23 +98,18 @@ export const refreshToken = async (req, res, next) => {
 
     const user = await User.findById(decoded.id);
 
-    if (!user || user.refreshToken !== refreshToken) {
+    if (!user || user.refreshToken !== token) {
       return next(new AppError("Invalid refresh token", 403));
     }
 
     const newAccessToken = signToken(user._id, user.role);
 
-    return sendSuccess(
-      res,
-      { accessToken: newAccessToken },
-      "Token refreshed"
-    );
-  } catch (err) {
+    return sendSuccess(res, { accessToken: newAccessToken }, "Token refreshed");
+  } catch (error) {
     next(new AppError("Invalid or expired refresh token", 401));
   }
 };
 
-// LOGOUT
 export const logout = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
@@ -113,7 +120,7 @@ export const logout = async (req, res, next) => {
     }
 
     return sendSuccess(res, null, "Logged out successfully");
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };

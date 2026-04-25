@@ -1,39 +1,63 @@
 import mongoose from "mongoose";
 
-const prescriptionSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+const prescriptionMedicineSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
     },
-    imageUrl: {
-        type: String,
-        required: true,
+    dosage: String,
+    frequency: String,
+    confidence: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
     },
-    ocrText: {
-        type: String
+    matchedMedicine: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Medicine",
+      default: null,
     },
-    medicines: [{
-        name: {
-            type: String,
-            required: true
-        },
-        dosage: String,
-        frequency: String,
-        confidence: Number,
-        matchedMedicine: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Medicine'
-        }
-    }],
-    status: {
-        type: String,
-        enum: ['uploaded', 'processed', 'edited'],
-        default: 'uploaded'
-    }
-}, {
-    timestamps: true
-});
+    matchedInDatabase: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: false }
+);
 
-const Prescription = mongoose.model('Prescription', prescriptionSchema);
+const prescriptionSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    imageUrl: {
+      type: String,
+      required: true,
+    },
+
+    ocrText: {
+      type: String,
+    },
+    ocrRawText: {
+      type: String,
+    },
+    medicines: [prescriptionMedicineSchema],
+    extractedMedicines: [prescriptionMedicineSchema],
+
+    status: {
+      type: String,
+      enum: ["uploaded", "processed", "edited"],
+      default: "uploaded",
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const Prescription = mongoose.model("Prescription", prescriptionSchema);
+
 export default Prescription;

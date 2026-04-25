@@ -5,7 +5,6 @@ import {
   refreshToken,
   logout,
 } from "../controllers/authController.js";
-
 import { protect } from "../middlewares/authMiddleware.js";
 import { validateRegister, validateLogin } from "../middlewares/validator.js";
 

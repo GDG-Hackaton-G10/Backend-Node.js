@@ -1,10 +1,27 @@
 import express from "express";
-import { extractMedicines } from "../controllers/prescriptController.js";
-import { protect } from "../middleware/auth.js";
+import upload from "../middlewares/uploadMiddleware.js";
+import { protect } from "../middlewares/authMiddleware.js";
+import {
+  uploadPrescription,
+  getPrescriptionById,
+  getUserPrescriptions,
+  updateMedicines,
+  extractMedicines,
+} from "../controllers/prescriptionController.js";
+import ownership from "../middlewares/ownershipMiddleware.js";
 
 const router = express.Router();
 
+router.use(protect);
 
-router.post("/extract-medicines", protect, extractMedicines);
+router.post("/upload", upload.single("image"), uploadPrescription);
+
+router.post("/extract-medicines", extractMedicines);
+
+router.get("/user/:userId", getUserPrescriptions);
+
+router.get("/:id", ownership, getPrescriptionById);
+
+router.patch("/:id/medicines", ownership, updateMedicines);
 
 export default router;
