@@ -6,6 +6,7 @@ import {
   getPrescriptionById,
   getUserPrescriptions,
   updateMedicines,
+  extractMedicines,
 } from "../controllers/prescriptionController.js";
 import ownership from "../middlewares/ownershipMiddleware.js";
 
@@ -14,6 +15,8 @@ const router = express.Router();
 router.use(protect);
 
 router.post("/upload", upload.single("image"), uploadPrescription);
+
+router.post("/extract-medicines", extractMedicines);
 
 router.get("/user/:userId", getUserPrescriptions);
 
