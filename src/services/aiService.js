@@ -16,6 +16,7 @@ Example output:
 
 If no medicines found, return an empty array: []`;
 
+// ─── AI Extraction ───────────────────────────────────────────────────────────
 
 export const extractWithAI = async (ocrText) => {
     const response = await groq.chat.completions.create({
@@ -36,6 +37,8 @@ export const extractWithAI = async (ocrText) => {
 
     return parsed;
 };
+
+// ─── Regex Fallback ──────────────────────────────────────────────────────────
 
 const DOSAGE_PATTERN = /\b\d+(\.\d+)?\s*(mg|mcg|ml|g|iu|units?)\b/gi;
 const FREQUENCY_PATTERNS = [
@@ -87,7 +90,7 @@ export const extractWithRegex = (ocrText) => {
     return medicines;
 };
 
-
+// ─── Medicine Matching ───────────────────────────────────────────────────────
 
 export const matchMedicines = async (extractedMedicines) => {
     const matched = await Promise.all(

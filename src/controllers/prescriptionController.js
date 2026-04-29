@@ -135,52 +135,36 @@ export const updateMedicines = async (req, res, next) => {
 
 export const extractMedicines = async (req, res, next) => {
   try {
-    const { prescriptionId, ocrText } = req.body;
+    const { ocrText, prescriptionId } = req.body;
 
-    if (!prescriptionId || !ocrText) {
-      return next(new AppError("prescriptionId and ocrText are required", 400));
+    if (!ocrText) {
+      return next(new AppError("ocrText is required", 400));
     }
-
-    const prescription = await Prescription.findById(prescriptionId);
-    if (!prescription) {
-      return next(new AppError("Prescription not found", 404));
-    }
-
-    if (prescription.userId.toString() !== req.user._id.toString()) {
-      return next(new AppError("Not authorized to access this prescription", 403));
-    }
-
-    prescription.ocrText = ocrText;
 
     let extractedMedicines = [];
-    let extractionMethod = "ai";
 
     try {
-      console.log("Attempting AI extraction...");
       extractedMedicines = await extractWithAI(ocrText);
-      console.log(`AI extracted ${extractedMedicines.length} medicines`);
     } catch (aiError) {
       console.error("AI failed, using regex fallback:", aiError.message);
       extractedMedicines = extractWithRegex(ocrText);
-      extractionMethod = "regex";
-      console.log(`Regex extracted ${extractedMedicines.length} medicines`);
     }
 
     const matchedMedicines = await matchMedicines(extractedMedicines);
 
-    prescription.medicines = matchedMedicines;
-    prescription.status = "processed";
-    await prescription.save();
+    const medicines = normalizeMedicines(matchedMedicines);
 
-    res.status(200).json({
-      success: true,
-      data: {
-        prescriptionId: prescription._id,
-        extractionMethod,
-        medicines: matchedMedicines,
-        count: matchedMedicines.length,
-      },
-    });
+    if (prescriptionId && req.user) {
+      const prescription = await Prescription.findById(prescriptionId);
+      if (prescription && prescription.userId.toString() === req.user._id.toString()) {
+        prescription.ocrText = ocrText;
+        prescription.medicines = medicines;
+        prescription.status = "processed";
+        await prescription.save();
+      }
+    }
+
+    return sendSuccess(res, { medicines }, "Medicines extracted successfully");
   } catch (err) {
     console.error("extractMedicines error:", err.message);
     next(new AppError("Extraction failed. Please try again.", 500));
