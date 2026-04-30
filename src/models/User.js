@@ -23,8 +23,8 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "pharmacy_manager", "admin"],
-      default: "user",
+      enum: ["user", "pharmacy", "guest"],
+      default: "guest",
     },
     refreshToken: {
       type: String,

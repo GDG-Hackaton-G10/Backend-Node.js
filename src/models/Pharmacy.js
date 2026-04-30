@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const pharmacySchema = new mongoose.Schema(
   {
+    owner: { 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     name: {
         type: String,
       required: true,
@@ -39,24 +43,6 @@ const pharmacySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    medicines: [
-      {
-        medicine: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Medicine",
-          required: true,
-        },
-        inStock: {
-          type: Boolean,
-          default: false,
-        },
-        quantity: {
-          type: Number,
-          default: 0,
-          min: 0,
-        },
-      },
-    ],
     contactInfo: {
       phoneNumber: {
         type: String,
@@ -72,7 +58,6 @@ const pharmacySchema = new mongoose.Schema(
 );
 
 pharmacySchema.index({ location: "2dsphere" });
-pharmacySchema.index({ "medicines.medicine": 1 });
 
 const Pharmacy = mongoose.model("Pharmacy", pharmacySchema);
 export default Pharmacy;
