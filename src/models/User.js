@@ -22,16 +22,23 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
     },
     role: {
-      type: String,
-      enum: ["user", "pharmacy", "guest"],
-      default: "guest",
+        type: String,
+        enum: ['user', 'pharmacy', 'admin'],
+        default: 'user',
     },
     refreshToken: {
       type: String,
       default: null,
     },
-  },
-  {
+    passwordResetToken: {
+        type: String,
+        default: null,
+    },
+    passwordResetExpires: {
+        type: Date,
+        default: null,
+    },
+}, {
     timestamps: true
   }
 );

@@ -61,6 +61,33 @@ The server will run on the port specified in your `.env` file.
 - `GET /api/pharmacies/nearby` — Find nearby pharmacies with required medicines
 - `GET /api/prescriptions/:id/status` — Track prescription status in real-time
 
+## Authentication And Roles
+
+- `user` is the default role for public registration and login.
+- `pharmacy` can access protected pharmacy-side endpoints such as `POST /api/v1/pharmacy/medicines`.
+- `admin` can access protected admin-side endpoints such as `POST /api/v1/admin/pharmacies`.
+- All protected endpoints require a Bearer access token.
+
+## Data Model
+
+- `Medicine` is the global medicine catalog.
+- `PharmacyMedicine` stores per-pharmacy inventory, including `pharmacyId`, `medicineId`, `price`, `stock`, and `availability`.
+- `Pharmacy` now stores `ownerId` and `status` values of `pending`, `approved`, or `suspended`.
+
+## Pharmacy Dashboard APIs
+
+- `GET /api/v1/pharmacy/medicines`
+- `POST /api/v1/pharmacy/medicines`
+- `PATCH /api/v1/pharmacy/medicines/:id`
+- `DELETE /api/v1/pharmacy/medicines/:id`
+
+## Admin Management APIs
+
+- `POST /api/v1/admin/users` to create `pharmacy` or `admin` staff accounts.
+- `POST /api/v1/admin/pharmacies` to create a pharmacy and bind it to an owner.
+
+Admin pharmacy creation should only send pharmacy profile data. Medicine inventory is added later by the pharmacy owner through `POST /api/v1/pharmacy/medicines`.
+
 ## Real-Time Communication
 
 Socket.IO is used for:

@@ -13,6 +13,17 @@ const pharmacySchema = new mongoose.Schema(
       maxlength: 100,
       trim: true,
     },
+    ownerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        unique: true,
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'approved', 'suspended'],
+        default: 'pending',
+    },
     location: {
       type: {
         type: String,
@@ -57,7 +68,7 @@ const pharmacySchema = new mongoose.Schema(
   }
 );
 
-pharmacySchema.index({ location: "2dsphere" });
+pharmacySchema.index({ location: '2dsphere'});
 
 const Pharmacy = mongoose.model("Pharmacy", pharmacySchema);
 export default Pharmacy;
