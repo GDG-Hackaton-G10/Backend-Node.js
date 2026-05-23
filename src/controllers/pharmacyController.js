@@ -8,34 +8,34 @@ import { sendSuccess } from '../utils/responseFormatter.js';
 import bcrypt from 'bcryptjs';
 
 const parseQueryList = (value) => {
-	if (!value) {
-		return [];
-	}
+  if (!value) {
+    return [];
+  }
 
-	if (Array.isArray(value)) {
-		return value.flatMap((item) => String(item).split(','));
-	}
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => String(item).split(","));
+  }
 
-	return String(value)
-		.split(',')
-		.map((item) => item.trim())
-		.filter(Boolean);
+  return String(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 };
 
 const getAvailabilityStatus = (availableCount, requestedCount) => {
-	if (!requestedCount) {
-		return 'Unknown';
-	}
+  if (!requestedCount) {
+    return "Unknown";
+  }
 
-	if (availableCount === 0) {
-		return 'Unavailable';
-	}
+  if (availableCount === 0) {
+    return "Unavailable";
+  }
 
-	if (availableCount >= requestedCount) {
-		return 'Available';
-	}
+  if (availableCount >= requestedCount) {
+    return "Available";
+  }
 
-	return 'Partial';
+  return "Partial";
 };
 
 const buildNearbyPipeline = ({ longitude, latitude, radiusKm }) => ([

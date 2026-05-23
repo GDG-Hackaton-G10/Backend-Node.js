@@ -1,12 +1,17 @@
 import mongoose from "mongoose";
 
-const pharmacySchema = new mongoose.Schema({
+const pharmacySchema = new mongoose.Schema(
+  {
+    owner: { 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     name: {
         type: String,
-        required: true,
-        minlength: 3,
-        maxlength: 100,
-        trim: true,
+      required: true,
+      minlength: 3,
+      maxlength: 100,
+      trim: true,
     },
     ownerId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -20,48 +25,50 @@ const pharmacySchema = new mongoose.Schema({
         default: 'pending',
     },
     location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point',
-            required: true
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+        required: true,
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+        validate: {
+          validator(coords) {
+            return Array.isArray(coords) && coords.length === 2;
+          },
+          message: "Coordinates must be [longitude, latitude]",
         },
-        coordinates: {
-            type: [Number],
-            required: true,
-            validate: {
-                validator: function(coords){
-                    return Array.isArray(coords) && coords.length === 2;
-                },
-                message: 'Coordinates must be [longitude, latitude]'
-            }
-        }
+      },
     },
     address: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
     openingHours: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
     isOpen: {
-        type: Boolean,
-        default: true,
+      type: Boolean,
+      default: true,
     },
     contactInfo: {
-        phoneNumber: {
-            type: String,
-            required: true
-        },
-        email: String,
-        socialMediaAddresses: [String]
-    }
-},{
+      phoneNumber: {
+        type: String,
+        required: true,
+      },
+      email: String,
+      socialMediaAddresses: [String],
+    },
+  },
+  {
     timestamps: true
-});
+  }
+);
 
 pharmacySchema.index({ location: '2dsphere'});
 
-const Pharmacy = mongoose.model('Pharmacy', pharmacySchema);
+const Pharmacy = mongoose.model("Pharmacy", pharmacySchema);
 export default Pharmacy;

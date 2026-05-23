@@ -7,7 +7,6 @@ import {
   requestPasswordReset,
   resetPassword,
 } from "../controllers/authController.js";
-
 import { protect } from "../middlewares/authMiddleware.js";
 import { validateRegister, validateLogin, validateRequestPasswordReset, validateResetPassword } from "../middlewares/validator.js";
 

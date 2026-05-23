@@ -18,7 +18,6 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -27,7 +26,7 @@ export const protect = async (req, res, next) => {
 
     req.user = user;
     next();
-  } catch (err) {
+  } catch (error) {
     return next(new AppError("Invalid or expired token", 401));
   }
 };
