@@ -32,17 +32,19 @@ export const protect = async (req, res, next) => {
   }
 };
 
-// ROLE BASED ACCESS
-export const authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return next(new AppError("Not authenticated", 401));
-    }
+export const authorizeRoles = (...roles) => (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError("Not authenticated", 401));
+  }
 
-    if (!roles.includes(req.user.role)) {
-      return next(new AppError("Access denied", 403));
-    }
+  if (!roles.includes(req.user.role)) {
+    return next(new AppError("Access denied", 403));
+  }
 
-    next();
-  };
+  next();
 };
+
+export const authorize = authorizeRoles;
+export const adminMiddleware = authorizeRoles("admin");
+export const pharmacyMiddleware = authorizeRoles("pharmacy");
+export const userMiddleware = authorizeRoles("user");

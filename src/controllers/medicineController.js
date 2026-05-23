@@ -51,3 +51,21 @@ export const getMedicineById = async (req, res, next) => {
 		next(error);
 	}
 };
+
+export const createMedicine = async (req, res, next) => {
+	try {
+		const { name, genericName, dosage, category, aliases } = req.body;
+
+		const medicine = await Medicine.create({
+			name,
+			genericName,
+			dosage,
+			category,
+			aliases,
+		});
+
+		return sendSuccess(res, medicine, 'Medicine created successfully', 201);
+	} catch (error) {
+		next(error);
+	}
+};

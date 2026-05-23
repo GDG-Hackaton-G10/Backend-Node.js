@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 import { connectDB } from '../src/config/db.js';
 import Medicine from '../src/models/Medicine.js';
 import Pharmacy from '../src/models/Pharmacy.js';
+import PharmacyMedicine from '../src/models/PharmacyMedicine.js';
 
 dotenv.config();
 
@@ -43,19 +45,50 @@ const seedData = async () => {
         await connectDB();
         await Medicine.deleteMany();
         await Pharmacy.deleteMany();
+        await PharmacyMedicine.deleteMany();
 
         const createdMeds = await Medicine.insertMany(genericMedicines);
         console.log(`${createdMeds.length} Generic Medicines Created`);
 
-        const pharmacyData = addisPharmacies.map((pharmacy) => {
-            const inventory = createdMeds.map((medicine) => ({
-                medicine: medicine.id,
-                inStock: Math.random() > 0.15,
-                quantity: 50 + Math.floor(Math.random() * 100)
-            }));
-            return { ...pharmacy, medicines: inventory };
+        const pharmacyUsers = [
+            { name: 'Gishen Owner', email: 'gishen.owner@example.com', password: 'password123' },
+            { name: 'Kenema Owner', email: 'kenema.owner@example.com', password: 'password123' },
+            { name: 'Belema Owner', email: 'belema.owner@example.com', password: 'password123' },
+        ];
+
+        const User = (await import('../src/models/User.js')).default;
+        await User.deleteMany({ email: { $in: pharmacyUsers.map((user) => user.email) } });
+
+        const createdUsers = await User.insertMany(
+            await Promise.all(
+                pharmacyUsers.map(async (user) => ({
+                    ...user,
+                    password: await bcrypt.hash(user.password, 10),
+                    role: 'pharmacy',
+                }))
+            )
+        );
+
+        const pharmacies = await Pharmacy.insertMany(addisPharmacies.map((pharmacy, index) => ({
+            ...pharmacy,
+            ownerId: createdUsers[index]._id,
+            status: 'approved',
+        })));
+
+        const pharmacyInventory = [];
+        pharmacies.forEach((pharmacy, index) => {
+            createdMeds.forEach((medicine) => {
+                pharmacyInventory.push({
+                    pharmacyId: pharmacy._id,
+                    medicineId: medicine._id,
+                    price: 100 + (index * 20) + Math.floor(Math.random() * 50),
+                    stock: 50 + Math.floor(Math.random() * 100),
+                    availability: Math.random() > 0.15,
+                });
+            });
         });
-        await Pharmacy.insertMany(pharmacyData);
+
+        await PharmacyMedicine.insertMany(pharmacyInventory);
         console.log(`All Pharmacies Seeded with common Stock`);
 
         process.exit(0);

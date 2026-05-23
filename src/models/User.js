@@ -22,11 +22,19 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['user', 'pharmacy_manager', 'admin'],
+        enum: ['user', 'pharmacy', 'admin'],
         default: 'user',
     },
     refreshToken: {
         type: String,
+        default: null,
+    },
+    passwordResetToken: {
+        type: String,
+        default: null,
+    },
+    passwordResetExpires: {
+        type: Date,
         default: null,
     },
 }, {

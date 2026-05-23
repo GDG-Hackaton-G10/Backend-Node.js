@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import User from "../models/User.js";
 import {
   signToken,
@@ -7,6 +8,15 @@ import {
 } from "../utils/jwtUtils.js";
 import { sendSuccess, sendError } from "../utils/responseFormatter.js";
 import AppError from "../utils/appError.js";
+
+const sanitizeUser = (user) => {
+  const userObject = user.toObject ? user.toObject() : { ...user };
+  delete userObject.password;
+  delete userObject.refreshToken;
+  delete userObject.passwordResetToken;
+  delete userObject.passwordResetExpires;
+  return userObject;
+};
 
 // REGISTER
 export const register = async (req, res, next) => {
@@ -33,7 +43,7 @@ export const register = async (req, res, next) => {
 
     return sendSuccess(
       res,
-      { user, accessToken, refreshToken },
+      { user: sanitizeUser(user), accessToken, refreshToken },
       "User registered successfully",
       201
     );
@@ -61,7 +71,7 @@ export const login = async (req, res, next) => {
 
     return sendSuccess(
       res,
-      { user, accessToken, refreshToken },
+      { user: sanitizeUser(user), accessToken, refreshToken },
       "Login successful"
     );
   } catch (err) {
@@ -113,6 +123,119 @@ export const logout = async (req, res, next) => {
     }
 
     return sendSuccess(res, null, "Logged out successfully");
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const requestPasswordReset = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    user.passwordResetToken = hashedToken;
+    user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    return sendSuccess(
+      res,
+      { resetToken },
+      'Password reset token generated successfully'
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return next(new AppError('Invalid or expired reset token', 400));
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    user.refreshToken = null;
+    await user.save();
+
+    return sendSuccess(res, null, 'Password reset successful');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const createStaffUser = async (req, res, next) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    if (!['pharmacy', 'admin'].includes(role)) {
+      return next(new AppError('Role must be pharmacy or admin', 400));
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return next(new AppError('User already exists', 400));
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+    });
+
+    return sendSuccess(res, sanitizeUser(user), 'Staff user created successfully', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().select('-password -refreshToken -passwordResetToken -passwordResetExpires');
+    return sendSuccess(res, users, 200);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updates = { ...req.body };
+
+    if (updates.password) {
+      updates.password = await bcrypt.hash(updates.password, 10);
+      updates.refreshToken = null;
+    }
+
+    const user = await User.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    }).select('-password -refreshToken -passwordResetToken -passwordResetExpires');
+
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+
+    return sendSuccess(res, user, 'User updated successfully');
   } catch (err) {
     next(err);
   }

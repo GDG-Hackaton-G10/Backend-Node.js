@@ -8,6 +8,17 @@ const pharmacySchema = new mongoose.Schema({
         maxlength: 100,
         trim: true,
     },
+    ownerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        unique: true,
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'approved', 'suspended'],
+        default: 'pending',
+    },
     location: {
         type: {
             type: String,
@@ -38,22 +49,6 @@ const pharmacySchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
-    medicines: [{
-        medicine: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Medicine',
-            required: true
-        },
-        inStock: {
-            type: Boolean,
-            default: false
-        },
-        quantity: {
-            type: Number,
-            default: 0,
-            min: 0
-        }
-    }],
     contactInfo: {
         phoneNumber: {
             type: String,
@@ -67,7 +62,6 @@ const pharmacySchema = new mongoose.Schema({
 });
 
 pharmacySchema.index({ location: '2dsphere'});
-pharmacySchema.index({ 'medicines.medicine': 1 });
 
 const Pharmacy = mongoose.model('Pharmacy', pharmacySchema);
 export default Pharmacy;
