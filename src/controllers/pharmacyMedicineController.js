@@ -127,8 +127,6 @@ export const updatePharmacyMedicine = async (req, res, next) => {
       return next(new AppError('Pharmacy not found for this user', 404, 'PHARMACY_NOT_FOUND'));
     }
 
-    export const updatePharmacyMedicineByPut = updatePharmacyMedicine;
-
     const { id } = req.params;
     assertObjectId(id, 'Invalid pharmacy medicine id');
 
@@ -149,6 +147,8 @@ export const updatePharmacyMedicine = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updatePharmacyMedicineByPut = updatePharmacyMedicine;
 
 export const deletePharmacyMedicine = async (req, res, next) => {
   try {

@@ -86,6 +86,8 @@ The server will run on the port specified in your `.env` file.
 - `POST /api/v1/admin/users` to create `pharmacy` or `admin` staff accounts.
 - `POST /api/v1/admin/pharmacies` to create a pharmacy and bind it to an owner.
 
+Admin pharmacy creation should only send pharmacy profile data. Medicine inventory is added later by the pharmacy owner through `POST /api/v1/pharmacy/medicines`.
+
 ## Real-Time Communication
 
 Socket.IO is used for:

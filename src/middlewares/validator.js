@@ -112,15 +112,8 @@ export const validateCreatePharmacy = (req, res, next) => {
       email: Joi.string().email().allow('', null),
       socialMediaAddresses: Joi.array().items(Joi.string()).default([]),
     }).required(),
-    medicines: Joi.array().items(
-      Joi.object({
-        medicine: Joi.string().required(),
-        inStock: Joi.boolean().default(false),
-        quantity: Joi.number().min(0).default(0),
-      })
-    ).default([]),
     isOpen: Joi.boolean(),
-  });
+  }).unknown(false);
 
   const { error } = schema.validate(req.body);
 
